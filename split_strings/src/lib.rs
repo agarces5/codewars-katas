@@ -6,20 +6,17 @@
 // * 'abcdef' => ['ab', 'cd', 'ef']
 
 fn solution(s: &str) -> Vec<String> {
-    if s.is_empty() {
-        return vec![];
-    }
-    let s = if s.len() % 2 == 1 {
-        format!("{}_", s)
-    } else {
-        s.to_string()
-    };
-    let x: Vec<char> = s.chars().collect();
-    let x = x.chunks(2);
-    x.fold(vec![], |mut acc: Vec<String>, c| {
-        acc.push(c.to_owned().iter().collect());
-        acc
-    })
+    s.chars()
+        .collect::<Vec<_>>()
+        .chunks(2)
+        .map(|pairs| {
+            if pairs.len() == 1 {
+                format!("{}_", pairs[0])
+            } else {
+                pairs.iter().collect()
+            }
+        })
+        .collect()
 }
 
 #[cfg(test)]
