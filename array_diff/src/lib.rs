@@ -9,9 +9,7 @@
 // array_diff(vec![1,2,2,2,3], vec![2]) == vec![1,3]
 
 fn array_diff<T: PartialEq>(a: Vec<T>, b: Vec<T>) -> Vec<T> {
-    let mut res = a;
-    b.iter().for_each(|b_n| res.retain(|a_x| a_x != b_n));
-    res
+    a.into_iter().filter(|x| !b.contains(x)).collect()
 }
 
 #[cfg(test)]
