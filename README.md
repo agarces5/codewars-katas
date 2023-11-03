@@ -9,6 +9,7 @@ Repo with codewars' katas solved
 - Multiples of 3 or 5
 - Decode the Morse Code
 - Array.diff
+- Give me a Diamond
 
 ## 7 kyu
 
