@@ -10,6 +10,7 @@ Repo with codewars' katas solved
 - Decode the Morse Code
 - Array.diff
 - Give me a Diamond
+- Detect Pangram
 
 ## 7 kyu
 
