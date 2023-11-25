@@ -2,8 +2,17 @@
 
 // Given a string, detect whether or not it is a pangram. Return True if it is, False if not. Ignore numbers and punctuation.
 
-fn is_pangram(_s: &str) -> bool {
-    todo!()
+const ALPHABET: &str = "abcdefghijklmnopqrstuvwxyz";
+
+#[allow(dead_code)]
+fn is_pangram(s: &str) -> bool {
+    let input = s.to_lowercase();
+    for i_char in ALPHABET.chars() {
+        if !input.contains(i_char) {
+            return false;
+        }
+    }
+    true
 }
 
 #[cfg(test)]
