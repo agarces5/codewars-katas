@@ -11,6 +11,7 @@ Repo with codewars' katas solved
 - Array.diff
 - Give me a Diamond
 - Detect Pangram
+- Find the odd int
 
 ## 7 kyu
 
