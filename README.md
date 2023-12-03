@@ -1,6 +1,10 @@
 # codewars-katas
 Repo with codewars' katas solved
 
+## 5 kyu
+
+- Molecule to atoms
+
 ## 6 kyu
 
 - Split Strings
