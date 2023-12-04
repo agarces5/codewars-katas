@@ -1,3 +1,7 @@
+use std::collections::HashMap;
+
+use crate::{errors::ParseError, Dictionary};
+
 pub fn has_valid_brackets(s: &str) -> Result<(), ParseError> {
     let mut brackets = HashMap::from([('{', 0), ('}', 0), ('[', 0), (']', 0), ('(', 0), (')', 0)]);
     s.chars().for_each(|c| {
@@ -48,7 +52,7 @@ pub fn rewrite_molecule(molecule: &str) -> String {
     rewrite_molecule
 }
 
-pub fn no_parenthesis(s: &str) -> String {
+fn no_parenthesis(s: &str) -> String {
     let mut result = String::new();
     for c in s.chars() {
         if let '(' = c {
@@ -71,7 +75,7 @@ pub fn no_parenthesis(s: &str) -> String {
     }
     result
 }
-pub fn no_brackets(s: &str) -> String {
+fn no_brackets(s: &str) -> String {
     let mut result = String::new();
     for c in s.chars() {
         if let '[' = c {
@@ -95,7 +99,7 @@ pub fn no_brackets(s: &str) -> String {
     result
 }
 
-pub fn no_braces(s: &str) -> String {
+fn no_braces(s: &str) -> String {
     let mut result = String::new();
     for c in s.chars() {
         if let '{' = c {
@@ -117,4 +121,31 @@ pub fn no_braces(s: &str) -> String {
         result = s.to_string();
     }
     result
+}
+fn parse_quantity(quantity: &str) -> usize {
+    if quantity.is_empty() {
+        1
+    } else {
+        quantity.parse::<usize>().unwrap()
+    }
+}
+fn check_element(element: &str) -> Result<(), ParseError> {
+    if element.chars().next().is_some_and(|c| c.is_uppercase()) {
+        Ok(())
+    } else {
+        Err(ParseError::Invalid)
+    }
+}
+pub fn push_into_dictionary(
+    dictionary: &mut Dictionary,
+    element: &str,
+    quantity: &str,
+) -> Result<(), ParseError> {
+    check_element(element)?;
+    let quantity = parse_quantity(quantity);
+    dictionary
+        .entry(element.to_owned())
+        .and_modify(|e| *e += quantity)
+        .or_insert(quantity);
+    Ok(())
 }
