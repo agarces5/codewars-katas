@@ -1,0 +1,29 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'molecule_to_atoms'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "hydrogen",
+                    "--no-run",
+                    "--lib",
+                    "--package=molecule_to_atoms"
+                ],
+                "filter": {
+                    "name": "molecule_to_atoms",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}
