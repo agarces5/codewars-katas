@@ -18,6 +18,9 @@
 
 // Note that brackets may be round, square or curly and can also be nested. Index after the braces is optional.
 
+// Input As2{Be4C5[BCo3(CO2)3]2}4Cu5 -> [("As", 2), ("B", 8), ("Be", 16), ("C", 44), ("Co", 24), ("Cu", 5), ("O", 48)]
+// Input: PuK5Ra[(Ra6)] -> [("K", 5), ("Pu", 1), ("Ra", 7)]
+
 use std::{collections::HashMap, fmt::Display};
 
 use thiserror::Error;
@@ -79,18 +82,38 @@ pub fn has_valid_brackets(s: &str) -> Result<(), ParseError> {
 }
 
 pub fn parse_molecule(s: &str) -> Result<Molecule, ParseError> {
-    let mut dictionary = HashMap::from([('H', 0usize), ('O', 0), ('X', 0), ('K', 0), ('S', 0)]);
+    println!("Input: {}", s);
+    let mut dictionary = HashMap::from([('H', 0usize)]);
     let mut result: Vec<Atom> = vec![];
     has_valid_brackets(s)?;
-    let molecule = rewrite_molecule(&s.replace("Mg", "X"));
+    let molecule = &s.replace("Mg", "X");
+    let molecule = &molecule.replace("As", "A");
+    let molecule = &molecule.replace("Be", "D");
+    let molecule = &molecule.replace("Co", "W");
+    let molecule = &molecule.replace("Cu", "Z");
+    let molecule = &molecule.replace("Fe", "F");
+    let molecule = &molecule.replace("Mo", "M");
+    let molecule = &molecule.replace("Pd", "T");
+    let molecule = rewrite_molecule(&molecule);
     for (i, c) in molecule.char_indices() {
+        println!("Char: {}\tDictionary:{:?}", c, dictionary);
         if c.is_ascii_uppercase() {
             if let Some(next_char) = molecule.chars().nth(i + 1) {
                 if next_char.is_ascii_digit() {
+                    let mut next_number = String::new();
+                    next_number.push(next_char);
+                    if let Some(digit_at_2) = molecule.chars().nth(i + 2) {
+                        if digit_at_2.is_ascii_digit() {
+                            next_number.push(digit_at_2);
+                        }
+                    }
+                    let next_digit = next_number
+                        .parse()
+                        .expect("Failed to convert String to number");
                     dictionary
                         .entry(c)
-                        .and_modify(|e| *e += next_char.to_digit(10).unwrap() as usize)
-                        .or_insert(1);
+                        .and_modify(|e| *e += next_digit)
+                        .or_insert(next_digit);
                 } else {
                     dictionary.entry(c).and_modify(|e| *e += 1).or_insert(1);
                 }
@@ -102,12 +125,16 @@ pub fn parse_molecule(s: &str) -> Result<Molecule, ParseError> {
     let new_dic: HashMap<String, usize> = dictionary
         .clone()
         .iter()
-        .map(|(k, &v)| {
-            if *k == 'X' {
-                ("Mg".to_string(), v)
-            } else {
-                (k.to_string(), v)
-            }
+        .map(|(k, &v)| match *k {
+            'A' => ("As".to_string(), v),
+            'D' => ("Be".to_string(), v),
+            'W' => ("Co".to_string(), v),
+            'Z' => ("Cu".to_string(), v),
+            'X' => ("Mg".to_string(), v),
+            'F' => ("Fe".to_string(), v),
+            'M' => ("Mo".to_string(), v),
+            'T' => ("Pd".to_string(), v),
+            _ => (k.to_string(), v),
         })
         .collect();
     for (k, v) in new_dic {
@@ -121,6 +148,7 @@ pub fn parse_molecule(s: &str) -> Result<Molecule, ParseError> {
     }
     Ok(result)
 }
+
 pub fn rewrite_molecule(molecule: &str) -> String {
     let mut rewrite_molecule = no_parenthesis(molecule);
     while rewrite_molecule.find(|c| c == '(').is_some() {
@@ -128,6 +156,9 @@ pub fn rewrite_molecule(molecule: &str) -> String {
     }
     while rewrite_molecule.find(|c| c == '[').is_some() {
         rewrite_molecule = no_brackets(&rewrite_molecule);
+    }
+    while rewrite_molecule.find(|c| c == '{').is_some() {
+        rewrite_molecule = no_braces(&rewrite_molecule);
     }
     rewrite_molecule
 }
@@ -161,6 +192,30 @@ pub fn no_brackets(s: &str) -> String {
         if let '[' = c {
             let (start, end) = s.split_once(']').unwrap();
             let (first, inside_brackets) = start.split_once('[').unwrap();
+            if end.starts_with(char::is_numeric) {
+                let (num, end) = end.split_at(1);
+                result.push_str(first);
+                result.push_str(&inside_brackets.repeat(num.parse().unwrap()));
+                result.push_str(end);
+            } else {
+                result.push_str(first);
+                result.push_str(inside_brackets);
+                result.push_str(end);
+            }
+        }
+    }
+    if result.is_empty() {
+        result = s.to_string();
+    }
+    result
+}
+
+pub fn no_braces(s: &str) -> String {
+    let mut result = String::new();
+    for c in s.chars() {
+        if let '{' = c {
+            let (start, end) = s.split_once('}').unwrap();
+            let (first, inside_brackets) = start.split_once('{').unwrap();
             if end.starts_with(char::is_numeric) {
                 let (num, end) = end.split_at(1);
                 result.push_str(first);
