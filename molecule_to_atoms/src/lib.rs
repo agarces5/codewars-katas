@@ -1,5 +1,5 @@
-mod errors;
-mod parser;
+pub mod errors;
+pub mod parser;
 
 use crate::errors::ParseError;
 use crate::parser::*;
@@ -11,8 +11,7 @@ pub type Molecule = Vec<Atom>;
 pub type Dictionary = HashMap<String, usize>;
 
 pub fn parse_molecule(s: &str) -> Result<Molecule, ParseError> {
-    has_valid_brackets(s)?;
-    let molecule = rewrite_molecule(s);
+    let molecule = rewrite_molecule(s)?;
     let mut dictionary: Dictionary = HashMap::new();
 
     let mut el = String::new();
@@ -43,8 +42,6 @@ pub fn parse_molecule(s: &str) -> Result<Molecule, ParseError> {
 
 #[cfg(test)]
 mod tests {
-    use crate::rewrite_molecule;
-
     use super::{parse_molecule, Molecule};
 
     macro_rules! assert_parse {
@@ -91,7 +88,6 @@ mod tests {
     }
 
     fn assert_parse(formula: &str, expected: &[(&str, usize)], _mst: &str) {
-        println!("{}", rewrite_molecule(formula));
         let mut expected = expected
             .iter()
             .map(|&(name, usize)| (name.to_owned(), usize))

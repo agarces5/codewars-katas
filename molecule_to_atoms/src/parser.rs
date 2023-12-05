@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::{errors::ParseError, Dictionary};
 
-pub fn has_valid_brackets(s: &str) -> Result<(), ParseError> {
+fn has_valid_brackets(s: &str) -> Result<HashMap<char, i32>, ParseError> {
     let mut brackets = HashMap::from([('{', 0), ('}', 0), ('[', 0), (']', 0), ('(', 0), (')', 0)]);
     s.chars().for_each(|c| {
         match c {
@@ -36,92 +36,74 @@ pub fn has_valid_brackets(s: &str) -> Result<(), ParseError> {
     if brackets.get(&'(').unwrap() - brackets.get(&')').unwrap() != 0 {
         return Err(ParseError::Mismatch);
     }
-    Ok(())
+    Ok(brackets)
 }
-pub fn rewrite_molecule(molecule: &str) -> String {
-    let mut rewrite_molecule = no_parenthesis(molecule);
-    while rewrite_molecule.find(|c| c == '(').is_some() {
-        rewrite_molecule = no_parenthesis(&rewrite_molecule);
+pub fn rewrite_molecule(molecule: &str) -> Result<String, ParseError> {
+    let mut brackets: Vec<(char, i32)> = has_valid_brackets(molecule)?.into_iter().collect();
+    let mut rw_molecule = molecule.to_string();
+    brackets.retain(|(k, _)| matches!(k, '(' | '[' | '{'));
+    brackets.sort_by(|v1, v2| v2.1.cmp(&v1.1));
+
+    let mut my_iter = brackets.into_iter().cycle().peekable();
+    let mut counter = 0;
+    while let Some(mut my_vec) = my_iter.next() {
+        while my_vec.1 >= my_iter.peek().unwrap().1 {
+            rw_molecule = clean_symbols(my_vec.0, &rw_molecule);
+            my_vec.1 -= 1;
+        }
+        if my_vec.1 <= 0 {
+            counter += 1;
+        }
+        if counter == 3 {
+            break;
+        }
     }
-    while rewrite_molecule.find(|c| c == '[').is_some() {
-        rewrite_molecule = no_brackets(&rewrite_molecule);
-    }
-    while rewrite_molecule.find(|c| c == '{').is_some() {
-        rewrite_molecule = no_braces(&rewrite_molecule);
-    }
-    rewrite_molecule
+
+    Ok(rw_molecule)
 }
 
-fn no_parenthesis(s: &str) -> String {
+fn clean_symbols(open_symbol: char, s: &str) -> String {
     let mut result = String::new();
-    for c in s.chars() {
-        if let '(' = c {
-            let (start, end) = s.split_once(')').unwrap();
-            let (first, inside_brackets) = start.split_once('(').unwrap();
-            if end.starts_with(char::is_numeric) {
-                let (num, end) = end.split_at(1);
-                result.push_str(first);
-                result.push_str(&inside_brackets.repeat(num.parse().unwrap()));
-                result.push_str(end);
-            } else {
-                result.push_str(first);
-                result.push_str(inside_brackets);
-                result.push_str(end);
-            }
+    let close_symbol = match open_symbol {
+        '(' => ')',
+        '[' => ']',
+        '{' => '}',
+        _ => '0',
+    };
+    if !s.contains(close_symbol) || !s.contains(open_symbol) {
+        return s.to_string();
+    } // revisar
+
+    let (start, right_side) = s.split_once(close_symbol).unwrap();
+    let (left_side, inside) = start.rsplit_once(open_symbol).unwrap();
+
+    let mut num = String::new();
+
+    for c in right_side.chars() {
+        if c.is_ascii_digit() {
+            num.push(c)
+        } else {
+            break;
         }
     }
-    if result.is_empty() {
-        result = s.to_string();
+
+    if !num.is_empty() {
+        let (_num, end) = right_side.split_at(num.len());
+        result.push_str(left_side);
+        result.push_str(&inside.repeat(num.parse().unwrap()));
+        result.push_str(end);
+    } else {
+        result.push_str(left_side);
+        result.push_str(inside);
+        result.push_str(right_side);
     }
-    result
-}
-fn no_brackets(s: &str) -> String {
-    let mut result = String::new();
-    for c in s.chars() {
-        if let '[' = c {
-            let (start, end) = s.split_once(']').unwrap();
-            let (first, inside_brackets) = start.split_once('[').unwrap();
-            if end.starts_with(char::is_numeric) {
-                let (num, end) = end.split_at(1);
-                result.push_str(first);
-                result.push_str(&inside_brackets.repeat(num.parse().unwrap()));
-                result.push_str(end);
-            } else {
-                result.push_str(first);
-                result.push_str(inside_brackets);
-                result.push_str(end);
-            }
-        }
-    }
+
     if result.is_empty() {
         result = s.to_string();
     }
     result
 }
 
-fn no_braces(s: &str) -> String {
-    let mut result = String::new();
-    for c in s.chars() {
-        if let '{' = c {
-            let (start, end) = s.split_once('}').unwrap();
-            let (first, inside_brackets) = start.split_once('{').unwrap();
-            if end.starts_with(char::is_numeric) {
-                let (num, end) = end.split_at(1);
-                result.push_str(first);
-                result.push_str(&inside_brackets.repeat(num.parse().unwrap()));
-                result.push_str(end);
-            } else {
-                result.push_str(first);
-                result.push_str(inside_brackets);
-                result.push_str(end);
-            }
-        }
-    }
-    if result.is_empty() {
-        result = s.to_string();
-    }
-    result
-}
 fn parse_quantity(quantity: &str) -> usize {
     if quantity.is_empty() {
         1
