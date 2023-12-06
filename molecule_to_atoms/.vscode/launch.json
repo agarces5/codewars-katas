@@ -12,7 +12,6 @@
             "cargo": {
                 "args": [
                     "test",
-                    "hydrogen",
                     "--no-run",
                     "--lib",
                     "--package=molecule_to_atoms"

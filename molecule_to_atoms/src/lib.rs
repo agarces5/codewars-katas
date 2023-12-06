@@ -1,43 +1,67 @@
 pub mod errors;
-pub mod parser;
 
 use crate::errors::ParseError;
-use crate::parser::*;
 
 use std::collections::HashMap;
 
 pub type Atom = (String, usize);
 pub type Molecule = Vec<Atom>;
-pub type Dictionary = HashMap<String, usize>;
 
 pub fn parse_molecule(s: &str) -> Result<Molecule, ParseError> {
-    let molecule = flatten_molecule(s)?;
-    let mut dictionary: Dictionary = HashMap::new();
+    let rev_input = s.chars().rev();
+    let mut accumulated_brackets: Vec<(char, usize)> = Vec::with_capacity(8);
+    let mut element = String::with_capacity(4);
+    let mut num = String::with_capacity(4);
+    let mut atoms: HashMap<String, usize> = HashMap::with_capacity(8);
 
-    let mut el = String::new();
-    let mut num = String::new();
-    for (i, c) in molecule.char_indices() {
-        if c.is_ascii_alphabetic() {
-            el.push(c);
-        } else {
-            num.push(c);
-        }
-        match molecule.chars().nth(i + 1) {
-            Some(c) => {
-                if c.is_uppercase() {
-                    push_into_dictionary(&mut dictionary, &el, &num)?;
-                    el = String::new();
-                    num = String::new();
-                }
+    for c in rev_input {
+        match c {
+            '(' | '[' | '{' => match accumulated_brackets.pop() {
+                Some(bracket) if get_opening_bracket(bracket.0) == c => continue,
+                _ => return Err(ParseError::Mismatch),
+            },
+            ')' | ']' | '}' => {
+                accumulated_brackets.push((c, num.parse().unwrap_or(1)));
+                num.clear();
             }
-            None => push_into_dictionary(&mut dictionary, &el, &num)?,
+            'A'..='Z' => {
+                element.insert(0, c);
+                atoms
+                    .entry(element.clone())
+                    .and_modify(|v| *v += calc_num(&accumulated_brackets, &num)) // Suma lo que habia a lo que se calcula
+                    .or_insert(calc_num(&accumulated_brackets, &num));
+                element.clear();
+                num.clear();
+            }
+            'a'..='z' => element.insert(0, c),
+            '0'..='9' => num.insert(0, c),
+            _ => return Err(ParseError::Invalid),
         }
     }
-    let result: Vec<Atom> = dictionary.into_iter().collect();
-    if result.is_empty() {
-        return Err(ParseError::Invalid);
+    if atoms.is_empty() {
+        Err(ParseError::Invalid)
+    } else {
+        Ok(atoms.into_iter().collect())
     }
-    Ok(result)
+}
+
+/// Multiplica el acumulado en los brackets por el numero que tenga el elemento al lado si lo tiene y si no por 1
+fn calc_num(acc_brackets: &[(char, usize)], num: &str) -> usize {
+    acc_brackets
+        .iter()
+        .map(|(_bracket, number)| number)
+        .product::<usize>()
+        * num.parse().unwrap_or(1)
+}
+
+/// Devuelve el caracter de apertura correspondiente o el mismo si no hace match
+fn get_opening_bracket(close_bracket: char) -> char {
+    match close_bracket {
+        ')' => '(',
+        ']' => '[',
+        '}' => '{',
+        _ => close_bracket,
+    }
 }
 
 #[cfg(test)]

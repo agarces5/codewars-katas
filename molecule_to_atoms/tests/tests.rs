@@ -2,21 +2,20 @@
 mod tests {
     use std::vec;
 
-    use molecule_to_atoms::parser::flatten_molecule;
-    use molecule_to_atoms::{parse_molecule, Molecule};
+    use molecule_to_atoms::parse_molecule;
 
     #[test]
-    fn test_rewrite_molecule() {
-        let s = "K4[ON(SO3)2]2";
-        let result = flatten_molecule(s).unwrap();
-        assert_eq!("K4ONSO3SO3ONSO3SO3", &result);
+    fn test_product_empty() {
+        let v: Vec<(char, usize)> = vec![];
+        let product: usize = v.iter().map(|(_c, v)| v).product();
+        assert_eq!(1, product);
     }
     #[test]
     fn test_hard() {
         let s = "[{Nb}20]7{[{Sm}]25}19";
-        let mut result: Molecule = parse_molecule(s).unwrap();
+        let mut result = parse_molecule(s).unwrap();
         result.sort();
-        let correct: Molecule = vec![("Nb".to_string(), 140), ("Sm".to_string(), 475)];
+        let correct = vec![("Nb".to_string(), 140), ("Sm".to_string(), 475)];
         assert_eq!(format!("{:?}", correct), format!("{:?}", result));
     }
     #[test]
@@ -44,4 +43,3 @@ mod tests {
         assert_eq!(format!("{:?}", correct), format!("{:?}", result));
     }
 }
-// K4[ONSO3SO32
