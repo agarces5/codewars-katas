@@ -1,8 +1,8 @@
-use std::collections::HashMap;
+use std::{borrow::BorrowMut, collections::HashMap};
 
 use crate::{errors::ParseError, Dictionary};
 
-fn has_valid_brackets(s: &str) -> Result<HashMap<char, i32>, ParseError> {
+fn get_valid_brackets(s: &str) -> Result<HashMap<char, i32>, ParseError> {
     let mut brackets = HashMap::from([('{', 0), ('}', 0), ('[', 0), (']', 0), ('(', 0), (')', 0)]);
     s.chars().for_each(|c| {
         match c {
@@ -38,28 +38,35 @@ fn has_valid_brackets(s: &str) -> Result<HashMap<char, i32>, ParseError> {
     }
     Ok(brackets)
 }
+fn sort_brackets(brackets: &mut [(char, i32)]) {
+    brackets.sort_by(|v1, v2| v2.1.cmp(&v1.1));
+}
+pub type Brackets = Vec<(char, i32)>;
+
 pub fn rewrite_molecule(molecule: &str) -> Result<String, ParseError> {
-    let mut brackets: Vec<(char, i32)> = has_valid_brackets(molecule)?.into_iter().collect();
+    let mut brackets: Brackets = get_valid_brackets(molecule)?.into_iter().collect();
     let mut rw_molecule = molecule.to_string();
     brackets.retain(|(k, _)| matches!(k, '(' | '[' | '{'));
-    brackets.sort_by(|v1, v2| v2.1.cmp(&v1.1));
+    sort_brackets(&mut brackets);
 
-    let mut my_iter = brackets.into_iter().cycle().peekable();
-    let mut counter = 0;
-    while let Some(mut my_vec) = my_iter.next() {
-        while my_vec.1 >= my_iter.peek().unwrap().1 {
-            rw_molecule = clean_symbols(my_vec.0, &rw_molecule);
-            my_vec.1 -= 1;
-        }
-        if my_vec.1 <= 0 {
-            counter += 1;
-        }
-        if counter == 3 {
-            break;
+    for i in 0..3 {
+        let j = if i == 2 { 0 } else { i + 1 };
+        while brackets[i].1 >= brackets[j].1 && brackets[i].1 > 0 {
+            rw_molecule = clean_symbols(brackets[i].0, &rw_molecule);
+            brackets[i].1 -= 1;
         }
     }
-
     Ok(rw_molecule)
+}
+pub fn flatten_molecule(molecule: &str) -> Result<String, ParseError> {
+    let mut molecule = rewrite_molecule(molecule)?;
+    let mut brackets = get_valid_brackets(&molecule)?;
+    while brackets.iter().any(|(_k, v)| v > &0) {
+        molecule = rewrite_molecule(&molecule)?;
+        brackets = get_valid_brackets(&molecule)?;
+    }
+
+    Ok(molecule)
 }
 
 fn clean_symbols(open_symbol: char, s: &str) -> String {
@@ -111,11 +118,13 @@ fn parse_quantity(quantity: &str) -> usize {
         quantity.parse::<usize>().unwrap()
     }
 }
+
 fn check_element(element: &str) -> Result<(), ParseError> {
-    if element.chars().next().is_some_and(|c| c.is_uppercase()) {
-        Ok(())
-    } else {
-        Err(ParseError::Invalid)
+    match element.chars().next() {
+        Some(c) => {
+            if c.is_uppercase() { Ok(())} else {Err(ParseError::Invalid)}
+        },
+        None => Err(ParseError::Invalid),
     }
 }
 pub fn push_into_dictionary(

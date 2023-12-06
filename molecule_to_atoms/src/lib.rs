@@ -11,7 +11,7 @@ pub type Molecule = Vec<Atom>;
 pub type Dictionary = HashMap<String, usize>;
 
 pub fn parse_molecule(s: &str) -> Result<Molecule, ParseError> {
-    let molecule = rewrite_molecule(s)?;
+    let molecule = flatten_molecule(s)?;
     let mut dictionary: Dictionary = HashMap::new();
 
     let mut el = String::new();

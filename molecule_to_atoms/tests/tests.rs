@@ -2,12 +2,13 @@
 mod tests {
     use std::vec;
 
-    use molecule_to_atoms::{parse_molecule, parser::rewrite_molecule, Molecule};
+    use molecule_to_atoms::parser::flatten_molecule;
+    use molecule_to_atoms::{parse_molecule, Molecule};
 
     #[test]
     fn test_rewrite_molecule() {
         let s = "K4[ON(SO3)2]2";
-        let result = rewrite_molecule(s).unwrap();
+        let result = flatten_molecule(s).unwrap();
         assert_eq!("K4ONSO3SO3ONSO3SO3", &result);
     }
     #[test]
