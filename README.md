@@ -4,6 +4,7 @@ Repo with codewars' katas solved
 ## 5 kyu
 
 - Molecule to atoms
+- Human Readable Time
 
 ## 6 kyu
 
