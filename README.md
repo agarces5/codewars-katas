@@ -1,6 +1,10 @@
 # codewars-katas
 Repo with codewars' katas solved
 
+## 4 kyu
+
+- Validate Sudoku with size `NxN`
+
 ## 5 kyu
 
 - Molecule to atoms
