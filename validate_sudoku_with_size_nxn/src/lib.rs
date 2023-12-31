@@ -1,11 +1,54 @@
+#![allow(dead_code)]
 struct Sudoku {
     data: Vec<Vec<u32>>,
 }
 
 impl Sudoku {
+    fn valid_square(&self, sum: u32, sqrt: usize) -> bool {
+        // Constructs an sqrt(N)xN vector
+        let sum_vector: Vec<Vec<u32>> = self
+            .data
+            .iter()
+            .map(|v| {
+                (0..v.len()).fold((0..sqrt).map(|_| 0).collect(), |mut acc: Vec<u32>, i| {
+                    acc[i / sqrt] += v[i]; // Sums each `sqrt` range in a row. N=3; Index 0+1+2 -> 0, 3+4+5->1, 6+7+8->2
+                    acc
+                })
+            })
+            .collect();
+
+        (0..sqrt)
+            .fold(vec![], |mut acc, j| {
+                acc.push((0..sum_vector.len()).fold(
+                    (0..sqrt).map(|_| 0).collect(),
+                    |mut acc: Vec<u32>, i| {
+                        acc[i / sqrt] += sum_vector[i][j];
+                        acc
+                    },
+                ));
+                acc
+            })
+            .iter()
+            .flat_map(|v| v.to_owned())
+            .all(|s| s == sum)
+    }
+
     fn is_valid(&self) -> bool {
-        // YOUR SOLUTION
-        false
+        let n = self.data.len();
+        let sum = (1..=n as u32).sum();
+        let sqrt = (n as f32).sqrt() as usize;
+
+        if let Some(v) = self.data.first() {
+            self.data.len() == v.len()
+                && (v.len() as f32).sqrt().fract() <= f32::EPSILON
+                && self.data.iter().all(|v| v.iter().sum::<u32>() == sum)
+                && (0..n)
+                    .map(|i| (0..n).map(move |j| self.data[j][i]).collect())
+                    .all(|v: Vec<u32>| v.iter().sum::<u32>() == sum)
+                && self.valid_square(sum, sqrt)
+        } else {
+            false
+        }
     }
 }
 #[cfg(test)]
