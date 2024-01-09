@@ -10,6 +10,7 @@ Repo with codewars' katas solved
 - Molecule to atoms
 - Human Readable Time
 - Number of trailing zeros of N!
+- My smallest code interpreter
 
 ## 6 kyu
 
