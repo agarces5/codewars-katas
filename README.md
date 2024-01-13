@@ -11,6 +11,7 @@ Repo with codewars' katas solved
 - Human Readable Time
 - Number of trailing zeros of N!
 - My smallest code interpreter
+- Sum of Pairs
 
 ## 6 kyu
 
