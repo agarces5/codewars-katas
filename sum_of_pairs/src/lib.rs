@@ -1,5 +1,21 @@
 pub fn sum_pairs(ints: &[i8], s: i8) -> Option<(i8, i8)> {
-    todo!()
+    let mut already_done = std::collections::HashSet::new();
+    let mut result = None;
+    let mut pos2 = ints.len();
+    for i in 0..pos2 {
+        if already_done.contains(&ints[i]) {
+            continue;
+        }
+        for j in (i + 1)..pos2 {
+            if ints[i] + ints[j] == s {
+                result = Some((ints[i], ints[j]));
+                pos2 = j;
+                break;
+            }
+        }
+        already_done.insert(ints[i]);
+    }
+    result
 }
 
 #[cfg(test)]
